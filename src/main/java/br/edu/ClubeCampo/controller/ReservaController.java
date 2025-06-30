@@ -8,13 +8,11 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import br.edu.ClubeCampo.dto.reserva.DadosAtualizaReserva;
 import br.edu.ClubeCampo.dto.reserva.DadosReservaSimples;
 import br.edu.ClubeCampo.dto.reserva.RequisicaoReservaDTO;
 import br.edu.ClubeCampo.model.reserva.Reserva;
@@ -50,7 +48,7 @@ public class ReservaController {
 	@Operation(summary = "Inscrever associado em turma")
 	public ResponseEntity<String> inscreverAssociado(@PathVariable Long idArea, @PathVariable Long idAssociado,
 			@RequestParam LocalDate data) {
-		String resultado = service.inscreverDependente(idArea, idAssociado, data);
+		String resultado = service.inscreverAssociado(idArea, idAssociado, data);
 
 		if (resultado.equals("Inscrição realizada com sucesso.")) {
 			return ResponseEntity.ok(resultado);
@@ -91,7 +89,7 @@ public class ReservaController {
 				nomePessoa = reserva.getDependente().getNomeCompleto();
 			}
 
-			return new DadosReservaSimples(reserva.getId(), reserva.getDataReserva(), reserva.getDataEvento(), idPessoa,
+			return new DadosReservaSimples(reserva.getId(), reserva.getNomeArea() ,reserva.getDataReserva(), reserva.getDataEvento(), idPessoa,
 					cpfPessoa, nomePessoa);
 		}).toList();
 
@@ -102,12 +100,6 @@ public class ReservaController {
 	@GetMapping("/{id}")
 	public ResponseEntity<Reserva> buscarPorId(@PathVariable Long id) {
 		return service.buscarPorId(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
-	}
-
-	@Operation(summary = "Atualizar reserva")
-	@PutMapping
-	public ResponseEntity<Reserva> atualizar(@RequestBody DadosAtualizaReserva dados) {
-		return service.atualizar(dados).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 	}
 
 	@Operation(summary = "Deletar reserva ou inscrição")

@@ -6,7 +6,6 @@ import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
-import br.edu.ClubeCampo.dto.reserva.DadosAtualizaReserva;
 import br.edu.ClubeCampo.dto.reserva.DadosCadastroReserva;
 import br.edu.ClubeCampo.model.associado.Associado;
 import br.edu.ClubeCampo.model.associado.Dependente;
@@ -49,42 +48,33 @@ public class ReservaService {
 		reservaRepo.deleteById(id);
 	}
 
-	public Optional<Reserva> atualizar(DadosAtualizaReserva dados) {
-		return reservaRepo.findById(dados.id()).map(reserva -> {
-			reserva.atualizarDados(dados);
-			return reservaRepo.save(reserva);
-		});
-	}
-
 	public String reservarArea(Long idArea, Long idAssociado, LocalDate dataEvento) {
-	    Optional<AreaReservavel> areaOpt = areaReservavelRepo.findById(idArea);
-	    Optional<Associado> associadoOpt = associadoRepo.findById(idAssociado);
+		Optional<AreaReservavel> areaOpt = areaReservavelRepo.findById(idArea);
+		Optional<Associado> associadoOpt = associadoRepo.findById(idAssociado);
 
-	    if (areaOpt.isEmpty() || associadoOpt.isEmpty())
-	        return "Área ou associado não encontrado.";
+		if (areaOpt.isEmpty() || associadoOpt.isEmpty())
+			return "Área ou associado não encontrado.";
 
-	    AreaReservavel area = areaOpt.get();
-	    Associado associado = associadoOpt.get();
+		AreaReservavel area = areaOpt.get();
+		Associado associado = associadoOpt.get();
 
-	    int mesesAtraso = calcularMesesInadimplentes(associado);
+		int mesesAtraso = calcularMesesInadimplentes(associado);
 
-	    // Aplica regras de restrição por inadimplência
-	    if (!podeReservar(area.getNome(), mesesAtraso)) {
-	        return "Reserva recusada: associado com cobranças vencidas há " + mesesAtraso + " meses.";
-	    }
+		// Aplica regras de restrição por inadimplência
+		if (!podeReservar(area.getNome(), mesesAtraso)) {
+			return "Reserva recusada: associado com cobranças vencidas há " + mesesAtraso + " meses.";
+		}
 
-	    long reservasNaData = area.getReservas().stream()
-	            .filter(r -> r.getDataEvento().equals(dataEvento))
-	            .count();
+		long reservasNaData = area.getReservas().stream().filter(r -> r.getDataEvento().equals(dataEvento)).count();
 
-	    if (reservasNaData < area.getQuantidadeDisponivel()) {
-	        Reserva novaReserva = new Reserva(new DadosCadastroReserva(dataEvento, "Reservável", area.getNome()),
-	                associado);
-	        novaReserva.setAreaReservada(area);
-	        reservaRepo.save(novaReserva);
-	        return "Reserva realizada com sucesso.";
-	    }
-	    return "Data indisponível para reserva.";
+		if (reservasNaData < area.getQuantidadeDisponivel()) {
+			Reserva novaReserva = new Reserva(new DadosCadastroReserva(dataEvento, area.getNome(), "Reservável"),
+					associado);
+			novaReserva.setAreaReservada(area);
+			reservaRepo.save(novaReserva);
+			return "Reserva realizada com sucesso.";
+		}
+		return "Data indisponível para reserva.";
 	}
 
 	public String inscreverAssociado(Long idArea, Long idAssociado, LocalDate data) {
@@ -92,31 +82,33 @@ public class ReservaService {
 		Optional<Associado> associadoOpt = associadoRepo.findById(idAssociado);
 
 		if (areaOpt.isEmpty() || associadoOpt.isEmpty())
-	        return "Área ou associado não encontrado.";
+			return "Área ou associado não encontrado.";
 
 		AreaComTurmas area = areaOpt.get();
 		Associado associado = associadoOpt.get();
 
 		int mesesAtraso = calcularMesesInadimplentes(associado);
 
-	    // Aplica regras de restrição por inadimplência
-	    if (!podeReservar(area.getNome(), mesesAtraso)) {
-	        return "Inscrição recusada: associado com cobranças vencidas há " + mesesAtraso + " meses.";
-	    };
+		// Aplica regras de restrição por inadimplência
+		if (!podeReservar(area.getNome(), mesesAtraso)) {
+			return "Inscrição recusada: associado com cobranças vencidas há " + mesesAtraso + " meses.";
+		}
+		;
 
 		long reservasNaData = area.getReservas().stream().filter(r -> r.getDataEvento().equals(data)).count();
 
 		long capacidadeTotal = (long) area.getTurmasDisponiveis() * area.getMaxPessoasPorTurma();
 
 		if (reservasNaData < capacidadeTotal) {
-			Reserva novaReserva = new Reserva(new DadosCadastroReserva(data, "Turmas", area.getNome()), associado);
+			Reserva novaReserva = new Reserva(new DadosCadastroReserva(data, area.getNome(), "AreaComTurmas"),
+					associado);
 			novaReserva.setAreaTurma(area);
 			area.getReservas().add(novaReserva);
 			reservaRepo.save(novaReserva);
 			areaRepo.save(area);
-	        return "Inscrição realizada com sucesso.";
-	    }
-	    return "Data indisponível para inscrição.";
+			return "Inscrição realizada com sucesso.";
+		}
+		return "Data indisponível para inscrição.";
 	}
 
 	public String inscreverDependente(Long idArea, Long idDependente, LocalDate data) {
@@ -124,7 +116,7 @@ public class ReservaService {
 		Optional<Dependente> dependenteOpt = dependenteRepo.findById(idDependente);
 
 		if (areaOpt.isEmpty() || dependenteOpt.isEmpty())
-	        return "Área ou associado não encontrado.";
+			return "Área ou dependente não encontrado.";
 
 		AreaComTurmas area = areaOpt.get();
 		Dependente dependente = dependenteOpt.get();
@@ -132,11 +124,12 @@ public class ReservaService {
 		Associado associado = dependente.getAssociado();
 		int mesesAtraso = calcularMesesInadimplentes(associado);
 
-	    // Aplica regras de restrição por inadimplência
-	    if (!podeReservar(area.getNome(), mesesAtraso)) {
-	        return "Inscrição recusada: associado com cobranças vencidas há " + mesesAtraso + " meses.";
-	    };
-	    
+		// Aplica regras de restrição por inadimplência
+		if (!podeReservar(area.getNome(), mesesAtraso)) {
+			return "Inscrição recusada: associado com cobranças vencidas há " + mesesAtraso + " meses.";
+		}
+		;
+
 		long reservasNaData = area.getReservas().stream().filter(r -> r.getDataEvento().equals(data)).count();
 
 		long capacidadeTotal = (long) area.getTurmasDisponiveis() * area.getMaxPessoasPorTurma();
@@ -148,46 +141,45 @@ public class ReservaService {
 			area.getReservas().add(novaReserva);
 			reservaRepo.save(novaReserva);
 			areaRepo.save(area);
-	        return "Inscrição realizada com sucesso.";
-	    }
-	    return "Data indisponível para inscrição.";
+			return "Inscrição realizada com sucesso.";
+		}
+		return "Data indisponível para inscrição.";
 	}
 
 	private int calcularMesesInadimplentes(Associado associado) {
-	    LocalDate hoje = LocalDate.now();
+		LocalDate hoje = LocalDate.now();
 
-	    // Buscar a cobrança mais antiga não paga
-	    Optional<LocalDate> vencimentoMaisAntigoOpt = associado.getCobrancas().stream()
-	        .filter(c -> !c.isPaga() && c.getDataVencimento() != null)
-	        .map(c -> c.getDataVencimento())
-	        .min(LocalDate::compareTo);
+		// Buscar a cobrança mais antiga não paga
+		Optional<LocalDate> vencimentoMaisAntigoOpt = associado.getCobrancas().stream()
+				.filter(c -> !c.isPaga() && c.getDataVencimento() != null).map(c -> c.getDataVencimento())
+				.min(LocalDate::compareTo);
 
-	    if (vencimentoMaisAntigoOpt.isEmpty()) {
-	        // Nenhuma cobrança em atraso
-	        associado.setMesesInadimplente(0);
-	        associado.setCartaoBloqueado(false);
-	        associadoRepo.save(associado);
-	        return 0;
-	    }
+		if (vencimentoMaisAntigoOpt.isEmpty()) {
+			// Nenhuma cobrança em atraso
+			associado.setMesesInadimplente(0);
+			associado.setCartaoBloqueado(false);
+			associadoRepo.save(associado);
+			return 0;
+		}
 
-	    LocalDate vencimentoMaisAntigo = vencimentoMaisAntigoOpt.get();
+		LocalDate vencimentoMaisAntigo = vencimentoMaisAntigoOpt.get();
 
-	    int diferencaMeses = (hoje.getYear() - vencimentoMaisAntigo.getYear()) * 12
-	            + (hoje.getMonthValue() - vencimentoMaisAntigo.getMonthValue());
+		int diferencaMeses = (hoje.getYear() - vencimentoMaisAntigo.getYear()) * 12
+				+ (hoje.getMonthValue() - vencimentoMaisAntigo.getMonthValue());
 
-	    // Se ainda não passou o mês do vencimento, considera 0
-	    if (hoje.getDayOfMonth() < vencimentoMaisAntigo.getDayOfMonth()) {
-	        diferencaMeses--;
-	    }
+		// Se ainda não passou o mês do vencimento, considera 0
+		if (hoje.getDayOfMonth() < vencimentoMaisAntigo.getDayOfMonth()) {
+			diferencaMeses--;
+		}
 
-	    int mesesAtraso = Math.max(diferencaMeses, 0);
+		int mesesAtraso = Math.max(diferencaMeses, 0);
 
-	    // Atualiza o associado
-	    associado.setMesesInadimplente(mesesAtraso);
-	    associado.setCartaoBloqueado(mesesAtraso >= 4);
-	    associadoRepo.save(associado);
+		// Atualiza o associado
+		associado.setMesesInadimplente(mesesAtraso);
+		associado.setCartaoBloqueado(mesesAtraso >= 4);
+		associadoRepo.save(associado);
 
-	    return mesesAtraso;
+		return mesesAtraso;
 	}
 
 	private boolean podeReservar(String nomeArea, int mesesAtraso) {

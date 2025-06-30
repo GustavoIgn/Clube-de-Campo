@@ -48,6 +48,7 @@ public class AreaReservavelController {
 	        var reservasSimples = area.getReservas().stream()
 	            .map(r -> new DadosReservaSimples(
 	                r.getId(),
+	                r.getNomeArea(),
 	                r.getDataReserva(),
 	                r.getDataEvento(),
 	                r.getAssociado().getId(),
@@ -74,9 +75,9 @@ public class AreaReservavelController {
 	}
 
 	@Operation(summary = "Atualizar área reservável")
-    @PutMapping
-    public ResponseEntity<AreaReservavel> atualizar(@RequestBody DadosAtualizacaoAreaReservavel dados) {
-        return service.buscarPorId(dados.id())
+    @PutMapping("/{id}")
+    public ResponseEntity<AreaReservavel> atualizar(@RequestBody DadosAtualizacaoAreaReservavel dados, @PathVariable Long id) {
+        return service.buscarPorId(id)
             .map(area -> {
                 area.setNome(dados.nome());
                 area.setCapacidade(dados.capacidade());
