@@ -32,66 +32,70 @@ public class ReservaController {
 	public ReservaController(ReservaService service) {
 		this.service = service;
 	}
-	
+
 	@Operation(summary = "Reservar área")
 	@PostMapping("/reservar")
 	public ResponseEntity<String> reservar(@RequestBody RequisicaoReservaDTO dto) {
-		boolean sucesso = service.reservarArea(dto.idArea(), dto.idAssociado(), dto.dataReserva());
+		String resultado = service.reservarArea(dto.idArea(), dto.idAssociado(), dto.dataReserva());
 
-		if (sucesso) {
-			return ResponseEntity.ok("Reserva realizada com sucesso.");
+		if (resultado.equals("Reserva realizada com sucesso.")) {
+			return ResponseEntity.ok(resultado);
 		} else {
-			return ResponseEntity.badRequest()
-					.body("Reserva não pode ser realizada (sem disponibilidade ou dados inválidos).");
+			// Retorna erro com a mensagem específica
+			return ResponseEntity.badRequest().body(resultado);
 		}
 	}
-	
+
 	@PostMapping("/{idArea}/inscrever-associado/{idAssociado}")
 	@Operation(summary = "Inscrever associado em turma")
 	public ResponseEntity<String> inscreverAssociado(@PathVariable Long idArea, @PathVariable Long idAssociado,
 			@RequestParam LocalDate data) {
-		boolean sucesso = service.inscreverAssociado(idArea, idAssociado, data);
-		return sucesso ? ResponseEntity.ok("Inscrição realizada com sucesso.")
-				: ResponseEntity.badRequest().body("Não foi possível realizar a inscrição.");
+		String resultado = service.inscreverDependente(idArea, idAssociado, data);
+
+		if (resultado.equals("Inscrição realizada com sucesso.")) {
+			return ResponseEntity.ok(resultado);
+		} else {
+			// Retorna erro com a mensagem específica
+			return ResponseEntity.badRequest().body(resultado);
+		}
 	}
 
 	@PostMapping("/{idArea}/inscrever-dependente/{idDependente}")
 	@Operation(summary = "Inscrever dependente em turma")
 	public ResponseEntity<String> inscreverDependente(@PathVariable Long idArea, @PathVariable Long idDependente,
 			@RequestParam LocalDate data) {
-		boolean sucesso = service.inscreverDependente(idArea, idDependente, data);
-		return sucesso ? ResponseEntity.ok("Inscrição realizada com sucesso.")
-				: ResponseEntity.badRequest().body("Não foi possível realizar a inscrição.");
+		String resultado = service.inscreverDependente(idArea, idDependente, data);
+
+		if (resultado.equals("Inscrição realizada com sucesso.")) {
+			return ResponseEntity.ok(resultado);
+		} else {
+			// Retorna erro com a mensagem específica
+			return ResponseEntity.badRequest().body(resultado);
+		}
 	}
 
 	@Operation(summary = "Listar reservas")
 	@GetMapping
 	public ResponseEntity<List<DadosReservaSimples>> listarTodas() {
-	    var lista = service.listarTodos().stream().map(reserva -> {
-	        Long idPessoa = null;
-	        String nomePessoa = null;
-	        String cpfPessoa = null;
+		var lista = service.listarTodos().stream().map(reserva -> {
+			Long idPessoa = null;
+			String nomePessoa = null;
+			String cpfPessoa = null;
 
-	        if (reserva.getAssociado() != null) {
-	            idPessoa = reserva.getAssociado().getId();
-	            nomePessoa = reserva.getAssociado().getNome();
-	            cpfPessoa = reserva.getAssociado().getCpf();
-	        } else if (reserva.getDependente() != null) {
-	            idPessoa = reserva.getDependente().getId();
-	            nomePessoa = reserva.getDependente().getNomeCompleto();
-	        }
+			if (reserva.getAssociado() != null) {
+				idPessoa = reserva.getAssociado().getId();
+				nomePessoa = reserva.getAssociado().getNome();
+				cpfPessoa = reserva.getAssociado().getCpf();
+			} else if (reserva.getDependente() != null) {
+				idPessoa = reserva.getDependente().getId();
+				nomePessoa = reserva.getDependente().getNomeCompleto();
+			}
 
-	        return new DadosReservaSimples(
-	            reserva.getId(),
-	            reserva.getDataReserva(),
-	            reserva.getDataEvento(),
-	            idPessoa,
-	            cpfPessoa,
-	            nomePessoa
-	        );
-	    }).toList();
+			return new DadosReservaSimples(reserva.getId(), reserva.getDataReserva(), reserva.getDataEvento(), idPessoa,
+					cpfPessoa, nomePessoa);
+		}).toList();
 
-	    return ResponseEntity.ok(lista);
+		return ResponseEntity.ok(lista);
 	}
 
 	@Operation(summary = "Buscar reserva")
@@ -100,13 +104,10 @@ public class ReservaController {
 		return service.buscarPorId(id).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 	}
 
-
 	@Operation(summary = "Atualizar reserva")
 	@PutMapping
 	public ResponseEntity<Reserva> atualizar(@RequestBody DadosAtualizaReserva dados) {
-	    return service.atualizar(dados)
-	            .map(ResponseEntity::ok)
-	            .orElse(ResponseEntity.notFound().build());
+		return service.atualizar(dados).map(ResponseEntity::ok).orElse(ResponseEntity.notFound().build());
 	}
 
 	@Operation(summary = "Deletar reserva ou inscrição")

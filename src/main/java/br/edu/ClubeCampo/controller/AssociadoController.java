@@ -78,6 +78,8 @@ public class AssociadoController {
             associado.setTelefoneComercial(dados.telefoneComercial());
             associado.setCelular(dados.celular());
             associado.setTipo(dados.tipo());
+            associado.setMesesInadimplente(dados.mesesInadimplente());
+            associado.setCartaoBloqueado(dados.cartaoBloqueado());
             associado = associadoService.salvar(associado);
             return ResponseEntity.ok(new DadosDetalhamentoAssociado(associado));
         }).orElse(ResponseEntity.notFound().build());

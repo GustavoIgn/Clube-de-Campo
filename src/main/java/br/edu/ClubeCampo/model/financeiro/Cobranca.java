@@ -26,6 +26,8 @@ public class Cobranca {
     private BigDecimal valorOriginal;
 
     private LocalDate dataVencimento;
+    
+    private LocalDate referencia;
 
     private boolean paga;
 
@@ -45,6 +47,7 @@ public class Cobranca {
         this.dataVencimento = dataVencimento;
         this.associado = associado;
         this.status = StatusCobranca.EM_ABERTO;
+        this.referencia = dataVencimento.withDayOfMonth(1);
     }
 
     // Getters e Setters
@@ -104,6 +107,12 @@ public class Cobranca {
 	public void setValorOriginal(BigDecimal valorOriginal) {
 		this.valorOriginal = valorOriginal;
 	}
-    
-    
+
+	public LocalDate getReferencia() {
+		return referencia;
+	}
+
+	public void setReferencia(LocalDate referencia) {
+		this.referencia = referencia;
+	}
 }
